@@ -1,0 +1,3 @@
+[submodule "KCVDB.LocalAnalyze"]
+	path = KCVDB.LocalAnalyze
+	url = git@github.com:KancolleVerificationTeam-Analyze/KCVDB.LocalAnalyze.git
