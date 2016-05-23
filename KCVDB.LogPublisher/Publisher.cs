@@ -158,6 +158,7 @@ namespace KCVDB.LogFilePublisher
         public void Dispose()
         {
             this.writer?.Dispose();
+            File.Move(this.stateFileInfo.FullName, $"{this.stateFileInfo.FullName}.bak");
             using (var stream = this.stateFileInfo.OpenWrite())
             {
                 Serializer.Serialize(stream, new PublisherState { SessionInfos = this.sessionInfos, MemberIds = this.memberIds });
