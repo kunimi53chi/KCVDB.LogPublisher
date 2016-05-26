@@ -15,12 +15,13 @@ namespace KCVDB.LogFilePublisher
         private static void Main(string[] args)
         {
             var options = new Options();
-            if (Parser.Default.ParseArgumentsStrict(args, options) && options.Paths.Count == 3)
+            if (Parser.Default.ParseArgumentsStrict(args, options))
             {
-                var statePath = options.Paths[0];
-                var inputPath = options.Paths[1];
-                var outputPath = options.Paths[2];
-                var publisher = new Publisher(statePath, outputPath);
+                var stateInputPath = options.StateInputPath;
+                var inputPath = options.InputPath;
+                var stateOutputPath = options.StateOutputPath;
+                var outputPath = options.OutputPath;
+                var publisher = new Publisher(stateInputPath, stateOutputPath, outputPath);
                 var logFiles = new LogDirectory(inputPath).Publish();
                 logFiles
                     .Subscribe(logFile =>
@@ -29,6 +30,10 @@ namespace KCVDB.LogFilePublisher
                         {
                             publisher.Add(line);
                         });
+                    },
+                    () =>
+                    {
+                        publisher.Dispose();
                     });
                 logFiles
                     .Where(logFile => options.Delete)
@@ -36,12 +41,6 @@ namespace KCVDB.LogFilePublisher
                     {
                         File.Delete(logFile.Path);
                     });
-                logFiles
-                    .Finally(() =>
-                    {
-                        publisher.Dispose();
-                    })
-                    .Subscribe();
                 logFiles.Connect();
             }
             else
@@ -55,8 +54,17 @@ namespace KCVDB.LogFilePublisher
             [Option("delete")]
             public bool Delete { get; set; }
 
-            [ValueList(typeof(List<string>))]
-            public List<string> Paths { get; set; }
+            [Option("state-input")]
+            public string StateInputPath { get; set; }
+
+            [Option("input", Required = true)]
+            public string InputPath { get; set; }
+
+            [Option("state-output", Required = true)]
+            public string StateOutputPath { get; set; }
+
+            [Option("output", Required = true)]
+            public string OutputPath { get; set; }
         }
     }
 }

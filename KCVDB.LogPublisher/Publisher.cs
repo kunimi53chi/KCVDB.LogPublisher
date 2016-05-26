@@ -1,36 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Reactive.Subjects;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-using ProtoBuf;
 
 namespace KCVDB.LogFilePublisher
 {
     sealed class Publisher : IDisposable
     {
-        public Publisher(string statePath, string outputPath)
+        public Publisher(string stateInputPath, string stateOutputPath, string logOutpuPath)
         {
-            PublisherState state;
-            this.stateFileInfo = new FileInfo(statePath);
-            if (this.stateFileInfo.Exists)
-            {
-                using (var stream = this.stateFileInfo.OpenRead())
-                {
-                    state = Serializer.Deserialize<PublisherState>(stream);
-                }
-                this.sessionInfos = state.SessionInfos;
-                this.memberIds = state.MemberIds;
-                this.publicMemberIds = new HashSet<int>(this.memberIds.Values);
-            }
-            else
-            {
-                this.sessionInfos = new Dictionary<Guid, SessionInfo>();
-                this.memberIds = new Dictionary<int, int>();
-                this.publicMemberIds = new HashSet<int>();
-            }
-            this.outputDirectoryInfo = new DirectoryInfo(outputPath);
+            this.state = new PublisherState(stateInputPath, stateOutputPath);
+            this.sessionInfos = this.state.SessionInfos;
+            this.memberIds = this.state.MemberInfos;
+            this.publicMemberIds = new HashSet<int>(this.memberIds.Values);
+            this.outputDirectoryInfo = new DirectoryInfo(logOutpuPath);
             this.outputDirectoryInfo.Create();
         }
 
@@ -40,8 +24,10 @@ namespace KCVDB.LogFilePublisher
             {
                 var row = new Row(line);
                 var uriMatch = uriRegex.Match(row.RequestUri);
-                if (uriMatch.Groups["payment"].Success)
+                var paymentGroup = uriMatch.Groups["payment"];
+                if (paymentGroup.Success)
                 {
+                    Console.WriteLine(uriMatch.Value);
                     this.publicSessionId = null;
                 }
                 else
@@ -70,6 +56,8 @@ namespace KCVDB.LogFilePublisher
                         Console.WriteLine($"{this.privateSessionId} => {this.publicSessionId}");
                     }
                     this.sessionInfos[this.privateSessionId.Value].LineHash = lineHash;
+                    row.AgentId = "";
+                    row.SessionId = this.publicSessionId.ToString();
                     row.RequestValue = requestRegex.Replace(row.RequestValue, match =>
                     {
                         if (match.Groups["id"].Success)
@@ -105,7 +93,7 @@ namespace KCVDB.LogFilePublisher
             if (match.Groups["number"].Success)
             {
                 int value;
-                if (match.Groups["key"].Value == "api_member_id")
+                if (match.Groups["key"].Value == "member_id")
                 {
                     value = ToPublicMemberId(int.Parse(match.Groups["number"].Value));
                 }
@@ -118,7 +106,7 @@ namespace KCVDB.LogFilePublisher
             else if (match.Groups["string"].Success)
             {
                 string value;
-                if (match.Groups["key"].Value == "api_member_id")
+                if (match.Groups["key"].Value == "member_id")
                 {
                     value = ToPublicMemberId(int.Parse(match.Groups["string"].Value)).ToString();
                 }
@@ -158,23 +146,19 @@ namespace KCVDB.LogFilePublisher
         public void Dispose()
         {
             this.writer?.Dispose();
-            File.Move(this.stateFileInfo.FullName, $"{this.stateFileInfo.FullName}.bak");
-            using (var stream = this.stateFileInfo.OpenWrite())
-            {
-                Serializer.Serialize(stream, new PublisherState { SessionInfos = this.sessionInfos, MemberIds = this.memberIds });
-            }
+            this.state?.Dispose();
         }
 
         static Publisher()
         {
             randomNumberGenerator = RandomNumberGenerator.Create();
-            uriRegex = new Regex("/kcsapi/api_(?:(?<payment>dmm_payment/.*|get_member/payitem|req_member/payitemuse/)|(?<deck>get_member/(?:preset_)?deck))$", RegexOptions.Compiled);
+            uriRegex = new Regex("/kcsapi/api_(?:(?<payment>dmm_payment/.*|get_member/payitem|req_member/payitemuse)|(?<deck>get_member/(?:preset_)?deck))$", RegexOptions.Compiled);
             requestRegex = new Regex("(?:^|(?<=&))(?<key>api(?:%5[Ff]|_)(?:name|cmt)(?<id>_id)?=)(?<value>[^&]*)", RegexOptions.Compiled);
             var ws = "[\\x09\\x0A\\x0D\\x20]*";
             var value = "(?:(?<number>[^\\x09\\x0A\\x0D\\x20\",:\\[\\]\\{\\}]+)|\"(?<string>(?:\\\\u....|\\\\[^u]|[^\\\\\"])*)\")";
             var lookbehind = "(?:^|(?<=[^\\\\]))";
-            deckResponseRegex = new Regex($"{lookbehind}(?<prefix>\"(?<key>api_(?:enemy_)?(?:comment|deck_?name|member|name|nickname)(?<id>_id)?)\"{ws}:{ws}){value}", RegexOptions.Compiled);
-            responseRegex = new Regex($"{lookbehind}(?<prefix>\"(?<key>api_(?:enemy_)?(?:comment|deck_?name|member|name|nickname)(?<id>_id)?)\"{ws}:{ws}){value}", RegexOptions.Compiled);
+            deckResponseRegex = new Regex($"{lookbehind}(?<prefix>\"api_(?<key>(?:enemy_)?(?:comment|deck_?name|member|name|nickname)(?<id>_id)?)\"{ws}:{ws}){value}", RegexOptions.Compiled);
+            responseRegex = new Regex($"{lookbehind}(?<prefix>\"api_(?<key>(?:enemy_)?(?:comment|deck_?name|member|name|nickname)(?<id>_id)?)\"{ws}:{ws}){value}", RegexOptions.Compiled);
         }
 
         private static readonly RandomNumberGenerator randomNumberGenerator;
@@ -182,7 +166,7 @@ namespace KCVDB.LogFilePublisher
         private static readonly Regex requestRegex;
         private static readonly Regex deckResponseRegex;
         private static readonly Regex responseRegex;
-        private readonly FileInfo stateFileInfo;
+        private readonly PublisherState state;
         private readonly Dictionary<Guid, SessionInfo> sessionInfos;
         private readonly Dictionary<int, int> memberIds;
         private readonly HashSet<int> publicMemberIds;

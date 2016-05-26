@@ -15,6 +15,11 @@ namespace KCVDB.LogFilePublisher
             }
         }
 
+        public Hash(string s)
+            : this(Convert.FromBase64String(s))
+        {
+        }
+
         public Hash(byte[] byteArray)
         {
             this.byteArray = byteArray;
@@ -45,9 +50,9 @@ namespace KCVDB.LogFilePublisher
             return StructuralComparisons.StructuralEqualityComparer.GetHashCode(this.byteArray);
         }
 
-        public byte[] ToByteArray()
+        public override string ToString()
         {
-            return this.byteArray;
+            return Convert.ToBase64String(this.byteArray);
         }
 
         private readonly byte[] byteArray;
