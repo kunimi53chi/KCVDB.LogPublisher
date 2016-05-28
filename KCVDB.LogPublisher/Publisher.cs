@@ -69,13 +69,17 @@ namespace KCVDB.LogFilePublisher
                             return $"{match.Groups["key"]}";
                         }
                     });
-                    if (uriMatch.Groups["deck"].Success)
+                    if (uriMatch.Groups["ranking"].Success)
                     {
-                        row.ResponseValue = deckResponseRegex.Replace(row.ResponseValue, EvaluateResponse);
+                        row.ResponseValue = responseRegex.Replace(row.ResponseValue, RemoveMemberId);
+                    }
+                    else if (uriMatch.Groups["deck"].Success)
+                    {
+                        row.ResponseValue = deckResponseRegex.Replace(row.ResponseValue, ReplaceMemberId);
                     }
                     else
                     {
-                        row.ResponseValue = responseRegex.Replace(row.ResponseValue, EvaluateResponse);
+                        row.ResponseValue = responseRegex.Replace(row.ResponseValue, ReplaceMemberId);
                     }
                     this.writer.WriteLine(row.ToString());
                 }
@@ -88,7 +92,34 @@ namespace KCVDB.LogFilePublisher
             }
         }
 
-        public string EvaluateResponse(Match match)
+        public string RemoveMemberId(Match match)
+        {
+            if (match.Groups["number"].Success)
+            {
+                int value;
+                value = 0;
+                return $"{match.Groups["prefix"].Value}{value}";
+            }
+            else if (match.Groups["string"].Success)
+            {
+                string value;
+                if (match.Groups["id"].Success)
+                {
+                    value = "0";
+                }
+                else
+                {
+                    value = "";
+                }
+                return $"{match.Groups["prefix"].Value}\"{value}\"";
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
+        }
+
+        public string ReplaceMemberId(Match match)
         {
             if (match.Groups["number"].Success)
             {
@@ -152,7 +183,7 @@ namespace KCVDB.LogFilePublisher
         static Publisher()
         {
             randomNumberGenerator = RandomNumberGenerator.Create();
-            uriRegex = new Regex("/kcsapi/api_(?:(?<payment>dmm_payment/.*|get_member/payitem|req_member/payitemuse)|(?<deck>get_member/(?:preset_)?deck))$", RegexOptions.Compiled);
+            uriRegex = new Regex("/kcsapi/api_(?:(?<payment>dmm_payment/.*|get_member/payitem|req_member/payitemuse)|(?<deck>get_member/(?:preset_)?deck|(?<ranking>get_member/practice|req_member/get_practice_enemyinfo|req_ranking/getlist)))$", RegexOptions.Compiled);
             requestRegex = new Regex("(?:^|(?<=&))(?<key>api(?:%5[Ff]|_)(?:name|cmt)(?<id>_id)?=)(?<value>[^&]*)", RegexOptions.Compiled);
             var ws = "[\\x09\\x0A\\x0D\\x20]*";
             var value = "(?:(?<number>[^\\x09\\x0A\\x0D\\x20\",:\\[\\]\\{\\}]+)|\"(?<string>(?:\\\\u....|\\\\[^u]|[^\\\\\"])*)\")";

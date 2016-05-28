@@ -48,4 +48,5 @@ namespace KCVDB.LogPublisher.Test
         {
             Console.WriteLine($"{key.GetType()}, {key}, {value.GetType()}, {value}");
         }
+    }
 }
