@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KCVDB.LogPublisher", "KCVDB
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KCVDB.LocalAnalyze(x64)", "KCVDB.LocalAnalyze\KCVDB.LocalAnalyze\KCVDB.LocalAnalyze(x64).csproj", "{F376678B-2C2C-46D4-9DE0-57302D0F9498}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KCVDB.LogPublisher.Test", "KCVDB.LogPublisher.Test\KCVDB.LogPublisher.Test.csproj", "{E13909FF-7A8C-4D4A-BCAE-09ECDD95B28C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -31,6 +33,14 @@ Global
 		{F376678B-2C2C-46D4-9DE0-57302D0F9498}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F376678B-2C2C-46D4-9DE0-57302D0F9498}.Release|x64.ActiveCfg = Release|x64
 		{F376678B-2C2C-46D4-9DE0-57302D0F9498}.Release|x64.Build.0 = Release|x64
+		{E13909FF-7A8C-4D4A-BCAE-09ECDD95B28C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E13909FF-7A8C-4D4A-BCAE-09ECDD95B28C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E13909FF-7A8C-4D4A-BCAE-09ECDD95B28C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E13909FF-7A8C-4D4A-BCAE-09ECDD95B28C}.Debug|x64.Build.0 = Debug|Any CPU
+		{E13909FF-7A8C-4D4A-BCAE-09ECDD95B28C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E13909FF-7A8C-4D4A-BCAE-09ECDD95B28C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E13909FF-7A8C-4D4A-BCAE-09ECDD95B28C}.Release|x64.ActiveCfg = Release|Any CPU
+		{E13909FF-7A8C-4D4A-BCAE-09ECDD95B28C}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
